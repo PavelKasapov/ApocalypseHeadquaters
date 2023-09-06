@@ -3,4 +3,5 @@
 public interface ITarget
 {
     Transform Transform { get; }
+    EntityType EntityType { get; }
 }

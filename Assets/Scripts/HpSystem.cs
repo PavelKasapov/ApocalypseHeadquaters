@@ -1,15 +1,17 @@
 using System;
 using UnityEngine;
 
-public class HpSystem : MonoBehaviour, IHittable
+public class HpSystem
 {
-    [SerializeField] private float _hpValue;
+    private float _hpValue;
+    private readonly GameObject gameObject;
     public Action<float> onHpChanged = delegate { };
     public float Hp {
         get => _hpValue;
         private set 
         {
             _hpValue = value;
+            Debug.Log(value);
             onHpChanged.Invoke(value);
             if (_hpValue <= 0)
             {
@@ -17,7 +19,13 @@ public class HpSystem : MonoBehaviour, IHittable
             }
         } 
     }
-    
+
+    public HpSystem(Transform characterTransform, float hpValue) 
+    {
+        gameObject = characterTransform.gameObject;
+        _hpValue = hpValue;
+    }
+
     public void TakeDamage(IDamageMaker damageMaker)
     {
         Hp -= damageMaker.Damage;

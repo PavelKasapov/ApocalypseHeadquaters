@@ -1,16 +1,20 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Zenject;
 
 public class HpBar : MonoBehaviour
 {
     [SerializeField] Slider _hpSlider;
-    [SerializeField] HpSystem _hpSystem;
+    //[SerializeField] HpSystem _hpSystem;
+
+    [Inject] Character ñharacter;
 
     private void Start()
     {
-        if (_hpSystem != null)
+        if (ñharacter.HpSystem != null)
         {
-            InitSlider(_hpSystem);
+            Debug.Log("InitSlider");
+            InitSlider(ñharacter.HpSystem);
         }
         else
         {
@@ -27,7 +31,13 @@ public class HpBar : MonoBehaviour
 
     public void SetValue(float value) 
     {
+        Debug.Log($"SetValue {_hpSlider.value} {_hpSlider.maxValue}");
         _hpSlider.value = value;
         gameObject.SetActive(_hpSlider.value != _hpSlider.maxValue);
+    }
+
+    private void OnDestroy()
+    {
+        ñharacter.HpSystem.onHpChanged -= SetValue;
     }
 }

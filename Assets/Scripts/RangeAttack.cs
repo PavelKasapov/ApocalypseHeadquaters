@@ -5,56 +5,71 @@ using Zenject;
 
 public class RangeAttack : MonoBehaviour
 {
+    [Inject] private Character character;
     [Inject] private BulletPool bulletPool;
-    [SerializeField] Sight enemyDetection;
-    [SerializeField] Transform selfTransform;
-    [SerializeField] LineRenderer lineRenderer;
 
-    private ITarget _target;
-    private Coroutine coroutine;
+    [SerializeField] private Transform pointerTransform;
+    //[SerializeField] Transform selfTransform;
 
-    public ITarget Target => _target;
+    //private ITarget _target;
+    private Coroutine shootingCoroutine;
+    private Coroutine drawAimCoroutine;
 
-    private void Awake()
+    //public ITarget Target => _target;
+
+    private void OnEnable()
     {
-        enemyDetection.OnFirstAppear = () => coroutine = StartCoroutine(ShootingRoutine());
-        enemyDetection.OnLastDisappear = () => { StopCoroutine(coroutine); coroutine = null; _target = null; };
+        character.SightSystem.OnTargetChange += OnTargetChange;
+    }
+
+    private void OnDisable()
+    {
+        character.SightSystem.OnTargetChange -= OnTargetChange;
     }
 
     IEnumerator ShootingRoutine()
     {
-        while (true)
+        var target = character.SightSystem.MainTarget;
+        while (character.SightSystem.MainTarget != null && character.SightSystem.MainTarget == target)
         {
-            enemyDetection.sightTargetsList = enemyDetection.sightTargetsList.OrderBy(enemy => Vector3.Distance(enemy.Transform.position, transform.position)).ToList();
-            _target = enemyDetection.sightTargetsList.FirstOrDefault();
-
             yield return new WaitForSeconds(1);
 
-            if (_target != null)
-            {
-                var selfPosition = selfTransform.position;
-                var targetPosition = _target.Transform.position;
+            var selfPosition = pointerTransform.position;
+            Debug.Log(selfPosition);
+            var targetPosition = character.SightSystem.MainTarget.Transform.position;
 
-                bulletPool.Pool.Get().Launch(selfPosition, (targetPosition - selfPosition).normalized);
-            }
+            bulletPool.Pool.Get().Launch(pointerTransform.position, (targetPosition - selfPosition).normalized);
         }
+        shootingCoroutine = null;
     }
 
-    private void Update()
+    IEnumerator DrawAimRoutine()
     {
-        if (_target != null)
+        character.SightSystem.LineRenderer.enabled = true;
+
+        while (character.SightSystem.MainTarget != null)
         {
-            lineRenderer.enabled = true;
+            var selfPosition = pointerTransform.position;
+            var targetPosition = character.SightSystem.MainTarget.Transform.position;
 
-            var selfPosition = selfTransform.position;
-            var targetPosition = _target.Transform.position;
+            character.SightSystem.LineRenderer.SetPosition(0, selfPosition);
+            character.SightSystem.LineRenderer.SetPosition(1, targetPosition);
 
-            lineRenderer.SetPosition(0, selfPosition);
-            lineRenderer.SetPosition(1, targetPosition);
+            yield return null;
         }
-        else 
-        { 
-            lineRenderer.enabled = false; 
-        }
+
+        character.SightSystem.LineRenderer.enabled = false;
+    }
+
+    private void OnTargetChange()
+    {
+        //Debug.Log($"{gameObject.name} {gameObject.activeInHierarchy}");
+        if (!gameObject.activeInHierarchy) return;
+
+        if (shootingCoroutine != null) StopCoroutine (shootingCoroutine);
+        if (drawAimCoroutine != null) StopCoroutine(drawAimCoroutine);
+
+        shootingCoroutine = StartCoroutine(ShootingRoutine());
+        drawAimCoroutine = StartCoroutine(DrawAimRoutine());
     }
 }

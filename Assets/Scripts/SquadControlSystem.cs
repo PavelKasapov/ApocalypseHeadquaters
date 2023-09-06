@@ -2,15 +2,19 @@ using UnityEngine;
 
 public class SquadControlSystem : MonoBehaviour
 {
-    private SquadCharacter selectedCharacter;
-    private SquadUnit selectedSquad;
+    private Character selectedCharacter;
+    private Squad selectedSquad;
 
-    public void SelectCharacter(SquadCharacter clickedCharacter, SquadUnit charactersSquad)
+    public void SelectCharacter(Character clickedCharacter)
     {
         selectedCharacter?.MarkSelected(false);
         selectedCharacter = clickedCharacter;
-        selectedSquad = charactersSquad;
-        selectedCharacter.MarkSelected(true);
+        
+        if (selectedCharacter != null) 
+        {
+            selectedSquad = clickedCharacter.Squad;
+            selectedCharacter.MarkSelected(true);
+        }
     }
 
     public void MoveToPoint(Vector2 clickedPoint)
@@ -20,14 +24,13 @@ public class SquadControlSystem : MonoBehaviour
             selectedSquad.MoveSquad(clickedPoint);
         } else if (selectedCharacter != null)
         {
-            selectedCharacter.movementSystem.MoveCharacter(clickedPoint);
+            selectedCharacter.MovementSystem.MoveCharacter(clickedPoint);
         }
     }
 
-    public void UnselectCharacter()
+   /* public void UnselectCharacter()
     {
         selectedCharacter?.MarkSelected(false);
         selectedCharacter = null;
-        selectedSquad = null;
-    }
+    }*/
 }

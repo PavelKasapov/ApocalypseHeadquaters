@@ -25,6 +25,13 @@ public class ViewField : MonoBehaviour
     }
 #endif
 
+    public void SetAnglesAndDistance(int angle, float distance)
+    {
+        viewFieldDegrees = angle;
+        viewFieldDistance = distance;
+        RearrangeCollider();
+    }
+
     private void RearrangeCollider()
     {
         if (viewFieldDegrees <= 0 || viewFieldDistance <= 0)

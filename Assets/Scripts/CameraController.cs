@@ -1,7 +1,9 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-public class PlayerControlSystem : MonoBehaviour
+public class CameraController : MonoBehaviour
 {
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private float cameraSpeed = 50f;
@@ -10,6 +12,8 @@ public class PlayerControlSystem : MonoBehaviour
 
     private Vector2 cameraMovementDirection;
     private Coroutine cameraMovementCoroutine;
+
+    public Camera MainCamera => mainCamera;
 
     public void MoveCamera(Vector2 direction)
     {
@@ -25,29 +29,20 @@ public class PlayerControlSystem : MonoBehaviour
     {
         while (cameraMovementDirection != Vector2.zero)
         {
-            cameraTransform.position += (Vector3)cameraMovementDirection * cameraSpeed * Time.deltaTime;
+            cameraTransform.position += cameraSpeed * Time.deltaTime * (Vector3)cameraMovementDirection;
             yield return null;
         }
 
         cameraMovementCoroutine = null;
     }
 
-    public void LeftClick(Vector2 cursorPosition)
+    public IClickable ClickRaycast(Vector2 cursorPosition)
     {
-        Raycast(cursorPosition)?.OnLeftClick(mainCamera.ScreenToWorldPoint(cursorPosition));
-    }
 
-    public void RightClick(Vector2 cursorPosition)
-    {
-        Raycast(cursorPosition)?.OnRightClick(mainCamera.ScreenToWorldPoint(cursorPosition));
-    }
-
-    private IClickable Raycast(Vector2 cursorPosition)
-    {
         IClickable result = null;
-        
+
         RaycastHit2D hit = Physics2D.Raycast(mainCamera.ScreenToWorldPoint(cursorPosition), Vector2.zero, float.PositiveInfinity, clickableLayerMask);
-        
+
         if (hit.collider != null)
         {
             Transform objectHit = hit.transform;
@@ -57,4 +52,11 @@ public class PlayerControlSystem : MonoBehaviour
 
         return result;
     }
+
+    public Vector2 ScreenToWorldPoint(Vector2 cursorPosition) => mainCamera.ScreenToWorldPoint(cursorPosition);
+
+    /*private void Update()
+    {
+        Debug.Log( EventSystem.current.IsPointerOverGameObject());
+    }*/
 }

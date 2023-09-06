@@ -4,10 +4,15 @@ using UnityEngine;
 
 public class MovementSystem : MonoBehaviour
 {
-    [SerializeField] Transform modelTransform;
-    [SerializeField] float speed = 10f;
-    [SerializeField] private float _rotationalSpeed = 240f;
-    [SerializeField] RangeAttack rangeAttack;
+    //private readonly ICoroutineHandler coroutineHandler;
+    [SerializeField] private SightSystem sightSystem;
+    [SerializeField] private new Transform transform;
+    [SerializeField] private Transform modelTransform;
+    [SerializeField] private float speed = 3f;
+    [SerializeField] private float rotationalSpeed = 240f;
+    [SerializeField] private LineRenderer pathRenderer;
+
+    //[SerializeField] SightSystem sight;
 
     private Coroutine moveCoroutine;
     private Coroutine rotateCoroutine;
@@ -16,6 +21,26 @@ public class MovementSystem : MonoBehaviour
     private float speedAngleModifier;
 
     private double distanceCheckValue = Vector3.one.sqrMagnitude * 0.01;
+
+    private void Awake()
+    {
+        sightSystem.OnTargetChange += () => rotateCoroutine ??= StartCoroutine(RotateRoutine());
+    }
+    /*public MovementSystem(
+        //ICoroutineHandler coroutineHandler,
+        SightSystem sightSystem,
+        Transform transform,
+        Transform modelTransform,
+        float speed = 3f,
+        float rotationalSpeed = 240f)
+    {
+        //this.coroutineHandler = coroutineHandler;
+        this.sightSystem = sightSystem;
+        this.transform = transform;
+        this.modelTransform = modelTransform;
+        this.speed = speed;
+        this.rotationalSpeed = rotationalSpeed;
+    }*/
 
     public void MoveCharacter(Vector3 point)
     {
@@ -26,20 +51,21 @@ public class MovementSystem : MonoBehaviour
         {
             moveCoroutine = StartCoroutine(MoveRoutine());
         }
-        if (rotateCoroutine == null)
-        {
-            rotateCoroutine = StartCoroutine(RotateRoutine());
-        }
+        rotateCoroutine ??= StartCoroutine(RotateRoutine());
     }
 
     IEnumerator MoveRoutine()
     {
+        pathRenderer.enabled = true; 
         while ((transform.position - pointToMove).sqrMagnitude > distanceCheckValue)
         {
+            pathRenderer.SetPosition(0, transform.position);
+            pathRenderer.SetPosition(1, pointToMove);
             transform.Translate((pointToMove - transform.position).normalized * speed * speedAngleModifier * Time.deltaTime);
 
             yield return null;
         }
+        pathRenderer.enabled = false;
         moveCoroutine = null;
     }
 
@@ -47,12 +73,12 @@ public class MovementSystem : MonoBehaviour
     {
         float angleBetween = float.MaxValue;
 
-        while (rangeAttack.Target != null || angleBetween > 0.01f)
+        while (sightSystem.MainTarget != null || (moveCoroutine != null && angleBetween > 0.01f))
         {
             Quaternion lookRotation;
-            if (rangeAttack.Target != null)
+            if (sightSystem.MainTarget != null)
             {
-                var target = rangeAttack.Target.Transform.position - modelTransform.position;
+                var target = sightSystem.MainTarget.Transform.position - transform.position;
                 var targetAngle = Mathf.Atan2(target.y, target.x) * Mathf.Rad2Deg;
                 lookRotation = Quaternion.AngleAxis(targetAngle - 90, Vector3.forward);
             }
@@ -68,7 +94,7 @@ public class MovementSystem : MonoBehaviour
 
             speedAngleModifier = (180 - angleBetween) / 180f * 0.5f + 0.5f;
 
-            modelTransform.rotation = Quaternion.RotateTowards(modelTransform.rotation, lookRotation, Time.deltaTime * _rotationalSpeed);
+            modelTransform.rotation = Quaternion.RotateTowards(modelTransform.rotation, lookRotation, Time.deltaTime * rotationalSpeed);
             
             yield return null;
         }
