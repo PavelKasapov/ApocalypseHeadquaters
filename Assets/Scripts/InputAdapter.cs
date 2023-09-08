@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class InputAdapter : MonoBehaviour
@@ -13,8 +14,13 @@ public class InputAdapter : MonoBehaviour
             ctx => _playerControl.OnCameraInput(ctx.ReadValue<Vector2>());
         _controls.Player.CameraMovement.canceled += 
             ctx => _playerControl.OnCameraInput(ctx.ReadValue<Vector2>());
+
+        _controls.Player.CameraZoom.performed +=
+            ctx => _playerControl.OnCameraZoom(Math.Sign(ctx.ReadValue<float>()));
+
         _controls.Player.LeftClick.performed += 
             ctx => _playerControl.SelectClick(_controls.Player.MousePosition.ReadValue<Vector2>());
+        
         _controls.Player.RightClick.performed += 
             ctx => _playerControl.InteractClick(_controls.Player.MousePosition.ReadValue<Vector2>());
     }

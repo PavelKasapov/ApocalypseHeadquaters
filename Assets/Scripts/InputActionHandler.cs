@@ -12,6 +12,11 @@ public class InputActionHandler : MonoBehaviour
         cameraController.MoveCamera(direction);
     }
 
+    public void OnCameraZoom(float value)
+    {
+        cameraController.ZoomCamera(value);
+    }
+
     public void SelectClick(Vector2 cursorPosition)
     {
         if (EventSystem.current.IsPointerOverGameObject())

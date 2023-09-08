@@ -7,9 +7,14 @@ public class CameraController : MonoBehaviour
     [SerializeField] private float cameraSpeed = 50f;
     [SerializeField] private Camera mainCamera;
     [SerializeField] private LayerMask clickableLayerMask;
+    [SerializeField] private float zoomSpeed = 7f;
 
+    private float targetZoom = 5f;
+    private float actualZoom = 5f;
     private Vector2 cameraMovementDirection;
+
     private Coroutine cameraMovementCoroutine;
+    private Coroutine cameraZoomCoroutine;
 
     public Camera MainCamera => mainCamera;
 
@@ -23,6 +28,16 @@ public class CameraController : MonoBehaviour
         }
     }
 
+    public void ZoomCamera(float value)
+    {
+        targetZoom -= value;
+
+        if (cameraZoomCoroutine == null)
+        {
+            cameraZoomCoroutine = StartCoroutine(CameraZoomRoutine());
+        }
+    }
+
     IEnumerator CameraMovementRoutine()
     {
         while (cameraMovementDirection != Vector2.zero)
@@ -32,6 +47,23 @@ public class CameraController : MonoBehaviour
         }
 
         cameraMovementCoroutine = null;
+    }
+
+    IEnumerator CameraZoomRoutine()
+    {
+        var startZoom = actualZoom;
+        
+        while (Mathf.Abs(actualZoom - targetZoom) > 0.01f)
+        {
+            actualZoom += Time.deltaTime * Mathf.Sign(targetZoom - actualZoom) * Mathf.Ceil(Mathf.Abs(targetZoom - actualZoom)) * zoomSpeed;
+            mainCamera.orthographicSize = actualZoom;
+
+            yield return null;
+        }
+        actualZoom = targetZoom;
+        mainCamera.orthographicSize = actualZoom;
+        
+        cameraZoomCoroutine = null;
     }
 
     public IClickable ClickRaycast(Vector2 cursorPosition)
