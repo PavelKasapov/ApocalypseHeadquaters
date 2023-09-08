@@ -14,15 +14,18 @@ public class InputActionHandler : MonoBehaviour
 
     public void SelectClick(Vector2 cursorPosition)
     {
+        if (EventSystem.current.IsPointerOverGameObject())
+            return;
+
         var target = cameraController.ClickRaycast(cursorPosition);
 
-        if (target == null && !EventSystem.current.IsPointerOverGameObject())
+        if (target == null)
         {
             squadControl.SelectCharacter(null);
             return;
         }
 
-        switch (target?.EntityType)
+        switch (target.EntityType)
         {
             case EntityType.Enemy:
                 //Show UI Info
@@ -40,7 +43,7 @@ public class InputActionHandler : MonoBehaviour
 
     public void InteractClick(Vector2 cursorPosition)
     {
-        if (!EventSystem.current.IsPointerOverGameObject())
+        if (EventSystem.current.IsPointerOverGameObject())
             return;
 
         var target = cameraController.ClickRaycast(cursorPosition);
@@ -51,7 +54,7 @@ public class InputActionHandler : MonoBehaviour
             return;
         }
 
-        switch (target?.EntityType)
+        switch (target.EntityType)
         {
             case EntityType.Enemy:
                 //Approach and attack
