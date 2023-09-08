@@ -27,10 +27,4 @@ public class SquadControlSystem : MonoBehaviour
             selectedCharacter.MovementSystem.MoveCharacter(clickedPoint);
         }
     }
-
-   /* public void UnselectCharacter()
-    {
-        selectedCharacter?.MarkSelected(false);
-        selectedCharacter = null;
-    }*/
 }

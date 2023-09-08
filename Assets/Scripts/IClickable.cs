@@ -1,13 +1,4 @@
-﻿using UnityEngine;
-
-public interface IClickable
+﻿public interface IClickable
 {
     EntityType EntityType { get; }
-}
-
-public enum EntityType
-{
-    SquadMember,
-    Enemy,
-    Ground,
 }

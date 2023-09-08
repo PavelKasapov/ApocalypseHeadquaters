@@ -1,5 +1,4 @@
 using UnityEngine;
-using Zenject;
 
 public class Squad : MonoBehaviour
 {
@@ -12,6 +11,9 @@ public class Squad : MonoBehaviour
         for (int i = 0; i < characters.Length; i++)
         {
             Character character = characters[i];
+
+            if (!character.gameObject.activeSelf) continue;
+
             character.MovementSystem.MoveCharacter(pointToMove);
         }
     }

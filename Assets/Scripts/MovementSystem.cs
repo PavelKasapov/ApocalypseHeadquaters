@@ -12,8 +12,6 @@ public class MovementSystem : MonoBehaviour
     [SerializeField] private float rotationalSpeed = 240f;
     [SerializeField] private LineRenderer pathRenderer;
 
-    //[SerializeField] SightSystem sight;
-
     private Coroutine moveCoroutine;
     private Coroutine rotateCoroutine;
     private Vector3 pointToMove;
@@ -26,21 +24,6 @@ public class MovementSystem : MonoBehaviour
     {
         sightSystem.OnTargetChange += () => rotateCoroutine ??= StartCoroutine(RotateRoutine());
     }
-    /*public MovementSystem(
-        //ICoroutineHandler coroutineHandler,
-        SightSystem sightSystem,
-        Transform transform,
-        Transform modelTransform,
-        float speed = 3f,
-        float rotationalSpeed = 240f)
-    {
-        //this.coroutineHandler = coroutineHandler;
-        this.sightSystem = sightSystem;
-        this.transform = transform;
-        this.modelTransform = modelTransform;
-        this.speed = speed;
-        this.rotationalSpeed = rotationalSpeed;
-    }*/
 
     public void MoveCharacter(Vector3 point)
     {

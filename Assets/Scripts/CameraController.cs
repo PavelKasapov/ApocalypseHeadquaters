@@ -1,7 +1,5 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 public class CameraController : MonoBehaviour
 {
@@ -53,10 +51,6 @@ public class CameraController : MonoBehaviour
         return result;
     }
 
-    public Vector2 ScreenToWorldPoint(Vector2 cursorPosition) => mainCamera.ScreenToWorldPoint(cursorPosition);
-
-    /*private void Update()
-    {
-        Debug.Log( EventSystem.current.IsPointerOverGameObject());
-    }*/
+    public Vector2 ScreenToWorldPoint(Vector2 cursorPosition) => 
+        mainCamera.ScreenToWorldPoint(cursorPosition);
 }

@@ -58,8 +58,3 @@ public class Bullet : MonoBehaviour, IDamageMaker
         }
     }
 }
-
-public interface IDamageMaker
-{
-    public float Damage { get; }
-}

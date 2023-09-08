@@ -11,8 +11,8 @@ public class HpSystem
         private set 
         {
             _hpValue = value;
-            Debug.Log(value);
             onHpChanged.Invoke(value);
+
             if (_hpValue <= 0)
             {
                 gameObject.SetActive(false);

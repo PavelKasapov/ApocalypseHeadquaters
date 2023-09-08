@@ -1,10 +1,8 @@
 using System.Collections;
 using UnityEngine;
-using Zenject;
 
 public class Character : MonoBehaviour, IClickable, ITarget, ICoroutineHandler
 {
-    //[Inject] private readonly SquadControlSystem squadControl;
     [SerializeField] private Transform selfTransform;
     [SerializeField] private Transform modelHolderTransform;
     [SerializeField] private Squad squadUnit;
@@ -27,12 +25,10 @@ public class Character : MonoBehaviour, IClickable, ITarget, ICoroutineHandler
     {
         hpSystem = new HpSystem(selfTransform, 10);
         sightSystem.Initialize(entityType, 90, 15);
-        //movementSystem = new MovementSystem(this, SightSystem, ModelTransform, Transform, 3f, 240f);
     }
 
     public void MarkSelected(bool isSelected)
     {
-        //mainSpriteTransform.localScale = isSelected ? smallerSize : Vector3.one;
         selectedCircle.SetActive(isSelected);
     }
 

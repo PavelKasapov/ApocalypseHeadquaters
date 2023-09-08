@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Zenject;
@@ -36,32 +35,21 @@ public class InputActionHandler : MonoBehaviour
                 break;
 
             default: break;
-            /*case EntityType.Ground:
-                squadControl.SelectCharacter(null);
-                break;*/
         }
-
-
-        //ClickRaycast(cursorPosition)?.OnLeftClick(mainCamera.ScreenToWorldPoint(cursorPosition));
     }
 
     public void InteractClick(Vector2 cursorPosition)
     {
-        /*if (EventSystem.current.IsPointerOverGameObject()) 
-        {
-            squadControl.MoveToPoint(cameraController.ScreenToWorldPoint(cursorPosition));
+        if (!EventSystem.current.IsPointerOverGameObject())
             return;
-        }*/
 
         var target = cameraController.ClickRaycast(cursorPosition);
 
-        if (target == null && !EventSystem.current.IsPointerOverGameObject())
+        if (target == null)
         {
             squadControl.MoveToPoint(cameraController.ScreenToWorldPoint(cursorPosition));
             return;
         }
-
-        //if (target == null)  return;
 
         switch (target?.EntityType)
         {
@@ -74,10 +62,6 @@ public class InputActionHandler : MonoBehaviour
                 break;
 
             default: break;
-            /*case EntityType.Ground:
-                squadControl.MoveToPoint(cameraController.ScreenToWorldPoint(cursorPosition));
-                break;*/
         }
-        //ClickRaycast(cursorPosition)?.OnRightClick(mainCamera.ScreenToWorldPoint(cursorPosition));
     }
 }

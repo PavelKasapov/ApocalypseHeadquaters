@@ -2,9 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 public class SightSystem : MonoBehaviour
 {
@@ -12,6 +10,7 @@ public class SightSystem : MonoBehaviour
 
     [SerializeField] private ViewField viewField;
     [SerializeField] private LineRenderer lineRenderer;
+    [SerializeField] private SpriteRenderer pointer;
 
     private EntityType entityType;
     public List<ITarget> sightTargetsList = new();
@@ -99,4 +98,6 @@ public class SightSystem : MonoBehaviour
             }
         }
     }
+
+    //OnTargetSwitch todo
 }
