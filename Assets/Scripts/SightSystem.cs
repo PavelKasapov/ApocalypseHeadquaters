@@ -14,8 +14,6 @@ public class SightSystem : MonoBehaviour
 
     private EntityType entityType;
     public List<ITarget> sightTargetsList = new();
-    public Action OnFirstAppear = delegate { };
-    public Action OnLastDisappear = delegate { };
     public Action OnTargetChange = delegate { };
     public LineRenderer LineRenderer => lineRenderer;
 
@@ -41,15 +39,15 @@ public class SightSystem : MonoBehaviour
         this.entityType = entityType;
     }
 
-    IEnumerator CheckForTargetRoutine()
+    IEnumerator TargetCheckingRoutine()
     {
-        while (true)
+        while (sightTargetsList.Count > 1)
         {
-            sightTargetsList = sightTargetsList.OrderBy(enemy => Vector3.Distance(enemy.Transform.position, transform.position)).ToList();
-            MainTarget = sightTargetsList.FirstOrDefault();
-
             yield return WaitOneSecond;
+
+            ReprioritizeTargets();
         }
+        targetRoutine = null;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -60,15 +58,11 @@ public class SightSystem : MonoBehaviour
             {
                 sightTargetsList.Add(target);
 
-                if (sightTargetsList.Count == 1)
-                {
-                    OnFirstAppear.Invoke();
-                    MainTarget = target;
-                }
+                ReprioritizeTargets();
 
-                if (sightTargetsList.Count == 2)
+                if (targetRoutine == null && sightTargetsList.Count > 1)
                 {
-                    targetRoutine = StartCoroutine(CheckForTargetRoutine());
+                    targetRoutine = StartCoroutine(TargetCheckingRoutine());
                 }
             }   
         }
@@ -82,22 +76,15 @@ public class SightSystem : MonoBehaviour
             {
                 sightTargetsList.Remove(target);
 
-                if (sightTargetsList.Count == 0)
-                {
-                    OnLastDisappear.Invoke();
-                    MainTarget = null;
-                }
-
-                if (sightTargetsList.Count == 1)
-                {
-                    MainTarget = sightTargetsList.First();
-
-                    StopCoroutine(targetRoutine);
-                    targetRoutine = null;
-                }
+                if (MainTarget == target) 
+                    ReprioritizeTargets();
             }
         }
     }
 
-    //OnTargetSwitch todo
+    private void ReprioritizeTargets()
+    {
+        sightTargetsList = sightTargetsList.OrderBy(enemy => Vector3.Distance(enemy.Transform.position, transform.position)).ToList();
+        MainTarget = sightTargetsList.FirstOrDefault();
+    }
 }
