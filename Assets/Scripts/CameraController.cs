@@ -51,8 +51,6 @@ public class CameraController : MonoBehaviour
 
     IEnumerator CameraZoomRoutine()
     {
-        var startZoom = actualZoom;
-        
         while (Mathf.Abs(actualZoom - targetZoom) > 0.01f)
         {
             actualZoom += Time.deltaTime * Mathf.Sign(targetZoom - actualZoom) * Mathf.Ceil(Mathf.Abs(targetZoom - actualZoom)) * zoomSpeed;
