@@ -10,7 +10,7 @@ public class SightSystem : MonoBehaviour
 
     [SerializeField] private ViewField viewField;
     [SerializeField] private LineRenderer lineRenderer;
-    [SerializeField] private SpriteRenderer pointer;
+    //[SerializeField] private SpriteRenderer pointer;
 
     private EntityType entityType;
     public List<ITarget> sightTargetsList = new();
@@ -32,6 +32,11 @@ public class SightSystem : MonoBehaviour
             }
         }
     }
+/*
+    private void OnDisable()
+    {
+        lineRenderer.enabled = false;
+    }*/
 
     public void Initialize(EntityType entityType, int sightAngle, float sightDistance)
     {
@@ -86,5 +91,7 @@ public class SightSystem : MonoBehaviour
     {
         sightTargetsList = sightTargetsList.OrderBy(enemy => Vector3.Distance(enemy.Transform.position, transform.position)).ToList();
         MainTarget = sightTargetsList.FirstOrDefault();
+        lineRenderer.enabled = MainTarget != null;
+        //Debug.Log($"{transform.parent.parent.parent.name} {MainTarget.Transform.name}");
     }
 }

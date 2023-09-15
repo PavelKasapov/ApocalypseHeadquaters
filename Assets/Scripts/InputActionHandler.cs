@@ -41,8 +41,6 @@ public class InputActionHandler : MonoBehaviour
                 squadControl.SelectCharacter(character);
                 //Show UI Info
                 break;
-
-            default: break;
         }
     }
 

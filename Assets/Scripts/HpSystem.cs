@@ -1,10 +1,11 @@
 using System;
 using UnityEngine;
+using Zenject;
 
 public class HpSystem
 {
-    private float _hpValue;
-    private readonly GameObject gameObject;
+    private float _hpValue = 10;
+    private readonly GameObject characterGameObject;
     public Action<float> onHpChanged = delegate { };
     public float Hp {
         get => _hpValue;
@@ -15,15 +16,14 @@ public class HpSystem
 
             if (_hpValue <= 0)
             {
-                gameObject.SetActive(false);
+                characterGameObject.SetActive(false);
             }
         } 
     }
 
-    public HpSystem(Transform characterTransform, float hpValue) 
+    public HpSystem([Inject(Id="MainTransform")]Transform mainTransform) 
     {
-        gameObject = characterTransform.gameObject;
-        _hpValue = hpValue;
+        characterGameObject = mainTransform.gameObject;
     }
 
     public void TakeDamage(IDamageMaker damageMaker)

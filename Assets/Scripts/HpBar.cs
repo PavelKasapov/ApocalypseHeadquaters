@@ -6,13 +6,13 @@ public class HpBar : MonoBehaviour
 {
     [SerializeField] Slider _hpSlider;
 
-    [Inject] Character ñharacter;
+    [Inject] HpSystem hpSystem;
 
     private void Start()
     {
-        if (ñharacter.HpSystem != null)
+        if (hpSystem != null)
         {
-            InitSlider(ñharacter.HpSystem);
+            InitSlider(hpSystem);
         }
         else
         {
@@ -27,14 +27,16 @@ public class HpBar : MonoBehaviour
         hpSystem.onHpChanged += SetValue;
     }
 
+    private void OnDestroy()
+    {
+        hpSystem.onHpChanged -= SetValue;
+    }
+
     public void SetValue(float value) 
     {
         _hpSlider.value = value;
         gameObject.SetActive(_hpSlider.value != _hpSlider.maxValue);
     }
 
-    private void OnDestroy()
-    {
-        ñharacter.HpSystem.onHpChanged -= SetValue;
-    }
+    
 }

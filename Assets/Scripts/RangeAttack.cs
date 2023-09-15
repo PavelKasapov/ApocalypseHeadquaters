@@ -1,69 +1,70 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using Zenject;
 
-public class RangeAttack : MonoBehaviour
+public class RangeAttack : IInitializable, IDisposable
 {
-    [Inject] private Character character;
-    [Inject] private BulletPool bulletPool;
-
-    [SerializeField] private Transform pointerTransform;
-    [SerializeField] Transform selfTransform;
+    private readonly SightSystem sightSystem;
+    private readonly BulletPool bulletPool;
+    private readonly Transform selfTransform;
 
     private Coroutine shootingCoroutine;
     private Coroutine drawAimCoroutine;
 
-    private void OnEnable()
+    public RangeAttack(
+        [Inject(Id = "ModelTransform")] Transform selfTransform,
+        SightSystem sightSystem, 
+        BulletPool bulletPool)
     {
-        character.SightSystem.OnTargetChange += OnTargetChange;
+        this.selfTransform = selfTransform;
+        this.bulletPool = bulletPool;
+        this.sightSystem = sightSystem;
     }
 
-    private void OnDisable()
-    {
-        character.SightSystem.OnTargetChange -= OnTargetChange;
-    }
+    public void Initialize() => sightSystem.OnTargetChange += OnTargetChange;
+    public void Dispose() => sightSystem.OnTargetChange -= OnTargetChange;
 
     IEnumerator ShootingRoutine()
     {
-        var target = character.SightSystem.MainTarget;
-        while (character.SightSystem.MainTarget != null && character.SightSystem.MainTarget == target)
+        var target = sightSystem.MainTarget;
+        while (sightSystem.MainTarget != null && sightSystem.MainTarget == target)
         {
             yield return new WaitForSeconds(1f);
 
-            var selfPosition = pointerTransform.position;
-            var targetPosition = character.SightSystem.MainTarget.Transform.position;
+            var selfPosition = selfTransform.position + selfTransform.up * 0.3f;
+            var targetPosition = sightSystem.MainTarget.Transform.position;
 
-            bulletPool.Pool.Get().Launch(pointerTransform.position, (targetPosition - selfPosition).normalized);
+            bulletPool.Pool.Get().Launch(selfPosition, (targetPosition - selfPosition).normalized);
         }
         shootingCoroutine = null;
     }
 
     IEnumerator DrawAimRoutine()
     {
-        character.SightSystem.LineRenderer.enabled = true;
-
-        while (character.SightSystem.MainTarget != null)
+        while (sightSystem.MainTarget != null)
         {
-            var selfPosition = character.Transform.position;
-            var targetPosition = character.SightSystem.MainTarget.Transform.position;
+            var selfPosition = selfTransform.position;
+            var targetPosition = sightSystem.MainTarget.Transform.position;
 
-            character.SightSystem.LineRenderer.SetPosition(0, selfPosition);
-            character.SightSystem.LineRenderer.SetPosition(1, targetPosition);
+            sightSystem.LineRenderer.SetPosition(0, selfPosition);
+            sightSystem.LineRenderer.SetPosition(1, targetPosition);
 
             yield return null;
         }
-
-        character.SightSystem.LineRenderer.enabled = false;
     }
 
     private void OnTargetChange()
     {
-        if (!gameObject.activeInHierarchy) return;
+        if (!selfTransform.gameObject.activeInHierarchy) return;
 
-        if (shootingCoroutine != null) StopCoroutine (shootingCoroutine);
-        if (drawAimCoroutine != null) StopCoroutine(drawAimCoroutine);
+        if (shootingCoroutine != null) sightSystem.StopCoroutine(shootingCoroutine);
+        if (drawAimCoroutine != null) sightSystem.StopCoroutine(drawAimCoroutine);
 
-        shootingCoroutine = StartCoroutine(ShootingRoutine());
-        drawAimCoroutine = StartCoroutine(DrawAimRoutine());
+        if (sightSystem.MainTarget != null)
+        {
+            shootingCoroutine = sightSystem.StartCoroutine(ShootingRoutine());
+            drawAimCoroutine = sightSystem.StartCoroutine(DrawAimRoutine());
+        }
     }
 }

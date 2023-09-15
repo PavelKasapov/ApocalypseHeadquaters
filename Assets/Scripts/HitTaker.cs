@@ -3,7 +3,7 @@ using Zenject;
 
 public class HitTaker : MonoBehaviour, IHittable
 {
-    [Inject] private Character character;
+    [Inject] private HpSystem hpSystem;
     public void TakeDamage(IDamageMaker damageMaker) => 
-        character.HpSystem.TakeDamage(damageMaker);
+        hpSystem.TakeDamage(damageMaker);
 }

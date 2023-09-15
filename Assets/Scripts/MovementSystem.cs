@@ -1,13 +1,14 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using Zenject;
 
 public class MovementSystem : MonoBehaviour
 {
-    //private readonly ICoroutineHandler coroutineHandler;
-    [SerializeField] private SightSystem sightSystem;
-    [SerializeField] private new Transform transform;
-    [SerializeField] private Transform modelTransform;
+    [Inject] private SightSystem sightSystem;
+    [Inject(Id = "MainTransform")] private Transform mainTransform;
+    [Inject(Id = "ModelTransform")] private Transform modelTransform;
+
     [SerializeField] private float speed = 3f;
     [SerializeField] private float rotationalSpeed = 240f;
     [SerializeField] private LineRenderer pathRenderer;
@@ -25,6 +26,11 @@ public class MovementSystem : MonoBehaviour
         sightSystem.OnTargetChange += () => rotateCoroutine ??= StartCoroutine(RotateRoutine());
     }
 
+    private void OnDestroy()
+    {
+        sightSystem.OnTargetChange -= () => rotateCoroutine ??= StartCoroutine(RotateRoutine());
+    }
+
     public void MoveCharacter(Vector3 point)
     {
         var moveDirection = point - modelTransform.position;
@@ -34,17 +40,21 @@ public class MovementSystem : MonoBehaviour
         {
             moveCoroutine = StartCoroutine(MoveRoutine());
         }
-        rotateCoroutine ??= StartCoroutine(RotateRoutine());
+        if (rotateCoroutine == null)
+        {
+            rotateCoroutine = StartCoroutine(RotateRoutine());
+        }
     }
 
     IEnumerator MoveRoutine()
     {
         pathRenderer.enabled = true; 
-        while ((transform.position - pointToMove).sqrMagnitude > distanceCheckValue)
+        while ((mainTransform.position - pointToMove).sqrMagnitude > distanceCheckValue)
         {
-            pathRenderer.SetPosition(0, transform.position);
+            pathRenderer.SetPosition(0, mainTransform.position);
             pathRenderer.SetPosition(1, pointToMove);
-            transform.Translate((pointToMove - transform.position).normalized * speed * speedAngleModifier * Time.deltaTime);
+
+            mainTransform.Translate((pointToMove - mainTransform.position).normalized * speed * speedAngleModifier * Time.deltaTime);
 
             yield return null;
         }
@@ -61,7 +71,7 @@ public class MovementSystem : MonoBehaviour
             Quaternion lookRotation;
             if (sightSystem.MainTarget != null)
             {
-                var target = sightSystem.MainTarget.Transform.position - transform.position;
+                var target = sightSystem.MainTarget.Transform.position - mainTransform.position;
                 var targetAngle = Mathf.Atan2(target.y, target.x) * Mathf.Rad2Deg;
                 lookRotation = Quaternion.AngleAxis(targetAngle - 90, Vector3.forward);
             }
