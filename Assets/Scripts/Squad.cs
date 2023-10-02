@@ -17,4 +17,16 @@ public class Squad : MonoBehaviour
             character.MovementSystem.MoveCharacter(pointToMove);
         }
     }
+
+    public void ChaseAndAttack(ITargetInfo targetInfo)
+    {
+        for (int i = 0; i < characters.Length; i++)
+        {
+            Character character = characters[i];
+
+            if (!character.gameObject.activeSelf) continue;
+
+            character.CombatSystem.ChaseAndAttack(targetInfo);
+        }
+    }
 }

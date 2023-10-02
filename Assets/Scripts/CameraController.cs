@@ -15,7 +15,6 @@ public class CameraController : MonoBehaviour
 
     private Coroutine cameraMovementCoroutine;
     private Coroutine cameraZoomCoroutine;
-
     public Camera MainCamera => mainCamera;
 
     public void MoveCamera(Vector2 direction)
@@ -30,7 +29,10 @@ public class CameraController : MonoBehaviour
 
     public void ZoomCamera(float value)
     {
-        targetZoom -= value;
+        var newZoom = targetZoom - value;
+        if (newZoom <= 0) return;
+
+        targetZoom = newZoom;
 
         if (cameraZoomCoroutine == null)
         {

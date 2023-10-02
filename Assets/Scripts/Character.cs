@@ -1,8 +1,7 @@
-using System.Collections;
 using UnityEngine;
 using Zenject;
 
-public class Character : MonoBehaviour, IClickable, ITarget
+public class Character : MonoBehaviour, IClickable, ITargetInfo
 {
     [SerializeField] private Squad squadUnit;
     [SerializeField] private GameObject selectedCircle;
@@ -11,18 +10,17 @@ public class Character : MonoBehaviour, IClickable, ITarget
     [Inject(Id = "MainTransform")] private Transform selfTransform;
     [Inject] private SightSystem sightSystem;
     [Inject] private MovementSystem movementSystem;
-    [Inject] private HpSystem hpSystem;
-    //[Inject] private RangeAttack rangeAttack;
+    [Inject] private CombatSystem combatSystem;
 
     public MovementSystem MovementSystem => movementSystem;
     public EntityType EntityType => entityType;
     public Transform Transform => selfTransform;
     public Squad Squad => squadUnit;
-    public HpSystem HpSystem => hpSystem;
+    public CombatSystem CombatSystem => combatSystem;
 
     private void Awake()
     {
-        sightSystem.Initialize(entityType, 90, 15);
+        sightSystem.Initialize(90, 15);
     }
 
     public void MarkSelected(bool isSelected)

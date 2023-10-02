@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public interface ITarget
+public interface ITargetInfo
 {
     Transform Transform { get; }
     EntityType EntityType { get; }

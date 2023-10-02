@@ -1,45 +1,58 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
 public class MovementSystem : MonoBehaviour
 {
-    [Inject] private SightSystem sightSystem;
+    [Inject] private CombatSystem combatSystem;
+    [Inject] private PathDrawer pathDrawer;
     [Inject(Id = "MainTransform")] private Transform mainTransform;
     [Inject(Id = "ModelTransform")] private Transform modelTransform;
 
     [SerializeField] private float speed = 3f;
     [SerializeField] private float rotationalSpeed = 240f;
-    [SerializeField] private LineRenderer pathRenderer;
 
     private Coroutine moveCoroutine;
     private Coroutine rotateCoroutine;
     private Vector3 pointToMove;
     private float moveAngle;
     private float speedAngleModifier;
+    private Queue<Vector3> path = new Queue<Vector3>();
 
     private double distanceCheckValue = Vector3.one.sqrMagnitude * 0.01;
 
     private void Awake()
     {
-        sightSystem.OnTargetChange += () => rotateCoroutine ??= StartCoroutine(RotateRoutine());
+        combatSystem.OnTargetChange += () => rotateCoroutine ??= StartCoroutine(RotateRoutine());
     }
 
     private void OnDestroy()
     {
-        sightSystem.OnTargetChange -= () => rotateCoroutine ??= StartCoroutine(RotateRoutine());
+        combatSystem.OnTargetChange -= () => rotateCoroutine ??= StartCoroutine(RotateRoutine());
     }
 
     public void MoveCharacter(Vector3 point)
     {
-        var moveDirection = point - modelTransform.position;
-        moveAngle = Mathf.Atan2(moveDirection.y, moveDirection.x) * Mathf.Rad2Deg;
-        pointToMove = point;
+        
+        //Todo: Path Generation;
+        path.Clear();
+        path.Enqueue(point);
+        //
+        pathDrawer.DrawPath(path);
+
         if (moveCoroutine == null)
         {
             moveCoroutine = StartCoroutine(MoveRoutine());
         }
+        else
+        {
+            pointToMove = path.Peek();
+            var moveDirection = pointToMove - modelTransform.position;
+            moveAngle = Mathf.Atan2(moveDirection.y, moveDirection.x) * Mathf.Rad2Deg;
+        }
+
         if (rotateCoroutine == null)
         {
             rotateCoroutine = StartCoroutine(RotateRoutine());
@@ -48,17 +61,31 @@ public class MovementSystem : MonoBehaviour
 
     IEnumerator MoveRoutine()
     {
-        pathRenderer.enabled = true; 
-        while ((mainTransform.position - pointToMove).sqrMagnitude > distanceCheckValue)
+        while (path.Count > 0)
         {
-            pathRenderer.SetPosition(0, mainTransform.position);
-            pathRenderer.SetPosition(1, pointToMove);
+            pointToMove = path.Peek();
+            var moveDirection = pointToMove - modelTransform.position;
+            moveAngle = Mathf.Atan2(moveDirection.y, moveDirection.x) * Mathf.Rad2Deg;
 
-            mainTransform.Translate((pointToMove - mainTransform.position).normalized * speed * speedAngleModifier * Time.deltaTime);
+            if (rotateCoroutine == null)
+            {
+                rotateCoroutine = StartCoroutine(RotateRoutine());
+            }
 
-            yield return null;
+            while ((mainTransform.position - pointToMove).sqrMagnitude > distanceCheckValue)
+            {
+                if (!combatSystem.IsHardLock || (combatSystem.IsHardLock && !combatSystem.IsWithinDistance))
+                {
+                    mainTransform.Translate(speed
+                    * speedAngleModifier
+                    * Time.deltaTime
+                    * (pointToMove - mainTransform.position).normalized);
+                }
+                yield return null;
+            }
+
+            path.Dequeue();
         }
-        pathRenderer.enabled = false;
         moveCoroutine = null;
     }
 
@@ -66,12 +93,12 @@ public class MovementSystem : MonoBehaviour
     {
         float angleBetween = float.MaxValue;
 
-        while (sightSystem.MainTarget != null || (moveCoroutine != null && angleBetween > 0.01f))
+        while (combatSystem.LockTarget != null || (moveCoroutine != null && angleBetween > 0.01f))
         {
             Quaternion lookRotation;
-            if (sightSystem.MainTarget != null)
+            if (combatSystem.LockTarget != null)
             {
-                var target = sightSystem.MainTarget.Transform.position - mainTransform.position;
+                var target = combatSystem.LockTarget.targetInfo.Transform.position - mainTransform.position;
                 var targetAngle = Mathf.Atan2(target.y, target.x) * Mathf.Rad2Deg;
                 lookRotation = Quaternion.AngleAxis(targetAngle - 90, Vector3.forward);
             }

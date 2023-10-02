@@ -5,7 +5,7 @@ using Zenject;
 public class InputActionHandler : MonoBehaviour
 {
     [SerializeField] private CameraController cameraController;
-    [Inject] private readonly SquadControlSystem squadControl;
+    [Inject] private readonly ActiveSquadControl squadControl;
 
     public void OnCameraInput(Vector2 direction)
     {
@@ -61,6 +61,8 @@ public class InputActionHandler : MonoBehaviour
         {
             case EntityType.Enemy:
                 //Approach and attack
+                var character = target as Character;
+                squadControl.ChaseAndAttack(character);
                 break;
 
             case EntityType.SquadMember:

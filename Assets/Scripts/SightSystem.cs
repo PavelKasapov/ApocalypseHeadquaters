@@ -1,97 +1,96 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Zenject;
 
 public class SightSystem : MonoBehaviour
 {
-    private static readonly WaitForSeconds WaitOneSecond = new(1);
+    private const float ModelOffset = 0.3f;
 
     [SerializeField] private ViewField viewField;
-    [SerializeField] private LineRenderer lineRenderer;
-    //[SerializeField] private SpriteRenderer pointer;
+    [SerializeField] public LayerMask whatBlocksDirectView;
+
+    [Inject(Id = "ModelTransform")] private Transform modelTransform;
 
     private EntityType entityType;
-    public List<ITarget> sightTargetsList = new();
+    private List<Target> targetsInCollider = new();
+    public IReadOnlyDictionary<ITargetInfo, Target> VisibleTargets => targetsInCollider.Where(target => target.IsDirectVision).ToDictionary(target => target.targetInfo);
+
     public Action OnTargetChange = delegate { };
-    public LineRenderer LineRenderer => lineRenderer;
+    public Action<Target, bool> OnVisionChange = delegate { };
 
-    private ITarget _mainTarget;
-    private Coroutine targetRoutine;
-
-    public ITarget MainTarget
-    {
-        get => _mainTarget;
-        private set
-        {
-            if (_mainTarget != value)
-            {
-                _mainTarget = value;
-                OnTargetChange?.Invoke();
-            }
-        }
-    }
-/*
-    private void OnDisable()
-    {
-        lineRenderer.enabled = false;
-    }*/
-
-    public void Initialize(EntityType entityType, int sightAngle, float sightDistance)
+    public void Initialize(int sightAngle, float sightDistance)
     {
         viewField.SetAnglesAndDistance(sightAngle, sightDistance);
-        this.entityType = entityType;
-    }
-
-    IEnumerator TargetCheckingRoutine()
-    {
-        while (sightTargetsList.Count > 1)
-        {
-            yield return WaitOneSecond;
-
-            ReprioritizeTargets();
-        }
-        targetRoutine = null;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.TryGetComponent<ITarget>(out var target))
+        if (collision.TryGetComponent<ITargetInfo>(out var targetInfo) 
+            && targetInfo.EntityType != entityType)
         {
-            if (target.EntityType != entityType)
-            {
-                sightTargetsList.Add(target);
-
-                ReprioritizeTargets();
-
-                if (targetRoutine == null && sightTargetsList.Count > 1)
-                {
-                    targetRoutine = StartCoroutine(TargetCheckingRoutine());
-                }
-            }   
+            targetsInCollider.Add(new Target(targetInfo, this));
         }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.TryGetComponent<ITarget>(out var target))
+        if (collision.TryGetComponent<ITargetInfo>(out var targetInfo) 
+            && targetInfo.EntityType != entityType)
         {
-            if (target.EntityType != entityType)
-            {
-                sightTargetsList.Remove(target);
+            var target = targetsInCollider.First(target => target.targetInfo == targetInfo);
+            
+            targetsInCollider.Remove(target);
 
-                if (MainTarget == target) 
-                    ReprioritizeTargets();
+            OnVisionChange?.Invoke(target, false);
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        foreach (var target in targetsInCollider.ToList())
+        {
+            if (!targetsInCollider.Contains(target))
+            {
+                continue;
+            }
+
+            var isDirectVision = CheckDirectSight(target.targetInfo.Transform);
+
+            if (isDirectVision != target.IsDirectVision) 
+            {
+                target.IsDirectVision = isDirectVision;
+                OnVisionChange?.Invoke(target, isDirectVision);
             }
         }
     }
 
-    private void ReprioritizeTargets()
+    public float GetDistance(Vector3 targetPosition)
     {
-        sightTargetsList = sightTargetsList.OrderBy(enemy => Vector3.Distance(enemy.Transform.position, transform.position)).ToList();
-        MainTarget = sightTargetsList.FirstOrDefault();
-        lineRenderer.enabled = MainTarget != null;
-        //Debug.Log($"{transform.parent.parent.parent.name} {MainTarget.Transform.name}");
+        return Vector3.Distance(modelTransform.position, targetPosition);
+    }
+
+    public bool CheckDirectSight(Transform targetTransform)
+    {
+        if (!targetsInCollider.Any(target => target.targetInfo.Transform == targetTransform))
+            return false;
+
+        var direction = (targetTransform.position - modelTransform.position).normalized;
+        var modelWithOffset = modelTransform.position + direction * ModelOffset;
+
+        var hit = Physics2D.Raycast(
+            modelWithOffset,
+            direction,
+            float.PositiveInfinity,
+            whatBlocksDirectView);
+
+        var isDirectVision = hit.transform == targetTransform;
+
+        Debug.DrawRay(modelWithOffset,
+            targetTransform.position - modelWithOffset,
+            isDirectVision ? Color.red : Color.yellow);
+
+        return isDirectVision;
     }
 }

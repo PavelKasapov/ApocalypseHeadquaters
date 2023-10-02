@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class SquadControlSystem : MonoBehaviour
+public class ActiveSquadControl : MonoBehaviour
 {
     private Character selectedCharacter;
     private Squad selectedSquad;
@@ -21,10 +21,27 @@ public class SquadControlSystem : MonoBehaviour
     {
         if (selectedSquad != null) 
         {
+            selectedSquad.ChaseAndAttack(null);
             selectedSquad.MoveSquad(clickedPoint);
-        } else if (selectedCharacter != null)
+        }   
+        else if (selectedCharacter != null)
         {
+            selectedCharacter.CombatSystem.ChaseAndAttack(null);
             selectedCharacter.MovementSystem.MoveCharacter(clickedPoint);
+        }
+    }
+
+    public void ChaseAndAttack(ITargetInfo targetInfo)
+    {
+        if (selectedSquad != null)
+        {
+            selectedSquad.ChaseAndAttack(targetInfo);
+            selectedSquad.MoveSquad(targetInfo.Transform.position);
+        }
+        else if (selectedCharacter != null)
+        {
+            selectedCharacter.CombatSystem.ChaseAndAttack(targetInfo);
+            selectedCharacter.MovementSystem.MoveCharacter(targetInfo.Transform.position);
         }
     }
 }
