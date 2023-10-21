@@ -6,10 +6,11 @@ public class Bullet : MonoBehaviour, IDamageMaker
 {
     [SerializeField] Transform selfTransform;
     [SerializeField] float speed = 1f;
+
     public float damage = 1f;
     public Action OnRelease;
     private Coroutine moveCoroutine;
-    private static TimeSpan threeSeconds = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan threeSeconds = TimeSpan.FromSeconds(3);
 
     public float Damage => damage;
 
@@ -18,7 +19,7 @@ public class Bullet : MonoBehaviour, IDamageMaker
         selfTransform.position = position;
 
         float angle = Vector3.Angle(Vector3.up, new Vector3(direction.x, direction.y, 0.0f));
-        if (direction.x > 0.0f) { angle = -angle; angle = angle + 360; }
+        if (direction.x > 0.0f) { angle = -angle; angle += 360; }
 
         selfTransform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
 
@@ -33,14 +34,8 @@ public class Bullet : MonoBehaviour, IDamageMaker
             selfTransform.Translate(Vector2.up * speed * Time.fixedDeltaTime);
             yield return new WaitForFixedUpdate();
         }
-        
-        if (isActiveAndEnabled)
-        {
-            OnRelease.Invoke();
-            StopCoroutine(moveCoroutine);
-            moveCoroutine = null;
-        }
-        
+
+        Release();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -50,6 +45,11 @@ public class Bullet : MonoBehaviour, IDamageMaker
             hitTarget.TakeDamage(this);
         }
 
+        Release();
+    }
+
+    private void Release()
+    {
         if (isActiveAndEnabled)
         {
             OnRelease.Invoke();

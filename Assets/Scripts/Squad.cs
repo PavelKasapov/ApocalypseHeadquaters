@@ -14,7 +14,7 @@ public class Squad : MonoBehaviour
 
             if (!character.gameObject.activeSelf) continue;
 
-            character.MovementSystem.MoveCharacter(pointToMove);
+            character.MovementSystem.MoveToPoint(pointToMove);
         }
     }
 

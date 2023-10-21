@@ -2,4 +2,3 @@
 {
     void TakeDamage(IDamageMaker damageMaker);
 }
-

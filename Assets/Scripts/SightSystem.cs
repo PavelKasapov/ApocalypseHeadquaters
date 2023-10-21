@@ -20,9 +20,11 @@ public class SightSystem : MonoBehaviour
     public Action OnTargetChange = delegate { };
     public Action<Target, bool> OnVisionChange = delegate { };
 
-    public void Initialize(int sightAngle, float sightDistance)
+
+    public void Initialize(int sightAngle, float sightDistance, EntityType entityType)
     {
         viewField.SetAnglesAndDistance(sightAngle, sightDistance);
+        this.entityType = entityType;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)

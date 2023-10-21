@@ -9,14 +9,24 @@ public class CombatSystem : IInitializable, IDisposable
     private static readonly WaitForSeconds WaitOneSecond = new(1);
 
     [Inject] private SightSystem sightSystem;
-    [Inject] private RangedAttack attack;
+    [Inject] private RangedAttack rangedAttack;
+    [Inject] private MeleeAttack meleeAttack;
     [Inject] private BehaviorColorIndicator behaviorColorIndicator;
     [Inject] private TargetAimDrawer targetAimDrawer;
+    //[Inject] private List<Attack> AvailableAttacks;
+
+    public CombatStatus Status => (
+        (LockTarget != null ? CombatStatus.LookAtTarget : CombatStatus.None) |
+        (LockTarget != null && IsWithinDistance ? CombatStatus.Attacking : CombatStatus.None) |
+        (LockTarget != null && !IsWithinDistance && IsHardLock ? CombatStatus.GettingCloser : CombatStatus.None)
+        );
 
     private Coroutine targetRoutine;
-    private Coroutine checkTargetDistanceRoutine;
+    private Coroutine attackCoroutine;
 
     private Target _lockTarget;
+    private Attack _attack;
+    
     public Action OnTargetChange = delegate { };
     public bool IsHardLock { get; private set; }
     public bool IsWithinDistance { get; private set; }
@@ -29,6 +39,24 @@ public class CombatSystem : IInitializable, IDisposable
             {
                 _lockTarget = value;
                 OnTargetChange?.Invoke();
+                _attack?.ChangeTarget(value);
+
+                if (value != null && attackCoroutine == null)
+                {
+                    attackCoroutine = sightSystem.StartCoroutine(AttackRoutine());
+                }
+            }
+        }
+    }
+    private Attack Attack
+    {
+        get => _attack; set
+        {
+            if (value != _attack)
+            {
+                _attack?.Stop();
+                _attack = value;
+                _attack.Perform(LockTarget);
             }
         }
     }
@@ -88,43 +116,33 @@ public class CombatSystem : IInitializable, IDisposable
                 LockTarget = Targets.FirstOrDefault();
             }
         }
-        if (checkTargetDistanceRoutine == null
-            && LockTarget != null)
-        {
-            checkTargetDistanceRoutine = sightSystem.StartCoroutine(TargetDistanceCheckingRoutine());
-        }
     }
 
-    IEnumerator TargetDistanceCheckingRoutine()
+    IEnumerator AttackRoutine()
     {
-        IsWithinDistance = false;
-        Target prevTarget = null;
-
         while (LockTarget != null)
         {
-            LockTarget.UpdateDistance();
-            
-            var isWithinDistance =  LockTarget.Distance < attack.AttackRange && sightSystem.VisibleTargets.ContainsKey(LockTarget.targetInfo);
-
-            if (isWithinDistance != IsWithinDistance || prevTarget != LockTarget)
+            if (Attack?.Status != AttackStatus.Attacking)
             {
-                behaviorColorIndicator.SetColor(isWithinDistance ? Color.red : Color.yellow);
-                targetAimDrawer.SetTarget(LockTarget);
-
-                attack.SetAttackTarget(isWithinDistance ? LockTarget : null);
-                prevTarget = LockTarget;
-
-                IsWithinDistance = isWithinDistance;
+                /*Attack = AvailableAttacks.FirstOrDefault(attack =>
+                attack is RangedAttack ranged &&
+                attack.CanAttack(LockTarget)) ??
+                AvailableAttacks.FirstOrDefault(attack => attack is MeleeAttack);*/
+                Attack = rangedAttack.CanAttack(LockTarget) && LockTarget.Distance > meleeAttack.MaxAttackRange
+                    ? rangedAttack 
+                    : meleeAttack;
             }
+            targetAimDrawer.SetTarget(Attack.Status != AttackStatus.NotPossible ? LockTarget : null);
+
+            behaviorColorIndicator.SetColor(Attack.Status != AttackStatus.NotPossible ? Color.red : Color.yellow);
 
             yield return new WaitForFixedUpdate();
         } 
 
-        targetAimDrawer.SetTarget(LockTarget);
-        attack.SetAttackTarget(LockTarget);
+        targetAimDrawer.SetTarget(null);
         behaviorColorIndicator.SetColor(Color.green);
 
-        checkTargetDistanceRoutine = null;
+        attackCoroutine = null;
     }
 
     public void ChaseAndAttack(ITargetInfo targetInfo)
@@ -134,7 +152,7 @@ public class CombatSystem : IInitializable, IDisposable
             var target = sightSystem.VisibleTargets.ContainsKey(targetInfo) 
                 ? sightSystem.VisibleTargets[targetInfo] 
                 : new Target(targetInfo, sightSystem);
-
+            
             LockTarget = target;
             IsHardLock = true;
             ReprioritizeTargets();

@@ -11,6 +11,7 @@ public class Character : MonoBehaviour, IClickable, ITargetInfo
     [Inject] private SightSystem sightSystem;
     [Inject] private MovementSystem movementSystem;
     [Inject] private CombatSystem combatSystem;
+    [Inject] private AI ai;
 
     public MovementSystem MovementSystem => movementSystem;
     public EntityType EntityType => entityType;
@@ -20,7 +21,7 @@ public class Character : MonoBehaviour, IClickable, ITargetInfo
 
     private void Awake()
     {
-        sightSystem.Initialize(90, 15);
+        sightSystem.Initialize(90, 15, EntityType);
     }
 
     public void MarkSelected(bool isSelected)
@@ -28,5 +29,3 @@ public class Character : MonoBehaviour, IClickable, ITargetInfo
         selectedCircle.SetActive(isSelected);
     }
 }
-
-

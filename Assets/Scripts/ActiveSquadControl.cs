@@ -27,7 +27,7 @@ public class ActiveSquadControl : MonoBehaviour
         else if (selectedCharacter != null)
         {
             selectedCharacter.CombatSystem.ChaseAndAttack(null);
-            selectedCharacter.MovementSystem.MoveCharacter(clickedPoint);
+            selectedCharacter.MovementSystem.MoveToPoint(clickedPoint);
         }
     }
 
@@ -41,7 +41,7 @@ public class ActiveSquadControl : MonoBehaviour
         else if (selectedCharacter != null)
         {
             selectedCharacter.CombatSystem.ChaseAndAttack(targetInfo);
-            selectedCharacter.MovementSystem.MoveCharacter(targetInfo.Transform.position);
+            selectedCharacter.MovementSystem.MoveToPoint(targetInfo.Transform.position);
         }
     }
 }

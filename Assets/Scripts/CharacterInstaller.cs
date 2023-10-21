@@ -25,5 +25,6 @@ public class CharacterInstaller : MonoInstaller<CharacterInstaller>
         Container.Bind<HpSystem>().AsSingle();
         Container.BindInterfacesAndSelfTo<CombatSystem>().AsSingle().NonLazy();
         Container.BindInterfacesAndSelfTo<RangedAttack>().AsSingle().NonLazy();
+        Container.BindInterfacesAndSelfTo<MeleeAttack>().AsSingle().NonLazy();
     }
 }

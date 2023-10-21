@@ -4,7 +4,7 @@ using Zenject;
 
 public class HpSystem
 {
-    private float _hpValue = 10;
+    private float _hpValue = 30;
     private readonly GameObject characterGameObject;
     public Action<float> onHpChanged = delegate { };
     public float Hp {

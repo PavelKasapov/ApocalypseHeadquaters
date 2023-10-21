@@ -1,55 +1,72 @@
+using System;
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using Zenject;
 
-public class RangedAttack : Attack//, IInitializable, IDisposable
+public class RangedAttack : Attack
 {
     private readonly BulletPool bulletPool;
-    private readonly TargetAimDrawer targetAimDrawer;
-    //private readonly BehaviorColorIndicator behaviorColorIndicator;
+    protected override WaitForSeconds delayBeforeAttack { get; set; } = new(1f);
+    protected override WaitForSeconds delayAfterAttack { get; set; } = new(0.1f);
+    public override float MaxAttackRange { get; protected set; } = 5f;
 
-    private Coroutine shootingCoroutine;
-    private Target attackTarget;
-
-    public override float AttackRange { get; protected set; } = 5f;
+    public int fullAmmo = 9;
+    public int totalAmmo = 27;
+    public int currentAmmo = 9;
 
     public RangedAttack(
         [Inject(Id = "ModelTransform")] Transform selfTransform,
         SightSystem sightSystem,
-        BulletPool bulletPool,
-        TargetAimDrawer targetAimDrawer) : base(selfTransform,sightSystem) 
+        BulletPool bulletPool) : base(selfTransform,sightSystem) 
     {
         this.bulletPool = bulletPool;
-        this.targetAimDrawer = targetAimDrawer;
     }
 
-    IEnumerator ShootingRoutine(Target target)
+    public override bool CanAttack(Target target)
     {
-        attackTarget = target;
-        
-        while (target == attackTarget && attackTarget != null)
+        return base.CanAttack(target)
+            && (currentAmmo > 0 || totalAmmo > 0);
+            /*&& Physics2D.CircleCast(selfTransform.position + selfTransform.up * 0.4f, 0.1f, attackTarget.targetInfo.Transform.position)*/;
+    }
+
+    protected override IEnumerator SingleAttackRoutine()
+    {
+        int burstCount = 3;
+        var target = attackTarget;
+        while (burstCount > 0 && currentAmmo > 0)
         {
-            yield return new WaitForSeconds(1f);
-
             var selfPosition = selfTransform.position + selfTransform.up * 0.3f;
-            var targetPosition = attackTarget.targetInfo.Transform.position;
-
-            Debug.DrawRay(selfPosition,
-                targetPosition - selfPosition,
-                Color.yellow);
+            var targetPosition = target.targetInfo.Transform.position;
 
             bulletPool.Pool.Get().Launch(selfPosition, (targetPosition - selfPosition).normalized);
+
+            burstCount--;
+            currentAmmo--;
+            yield return new WaitForSeconds(0.1f);
+        }
+        if (currentAmmo <= 0)
+        {
+            yield return ReloadRoutine();
         }
     }
 
-
-    public void SetAttackTarget(Target target)
+    protected override IEnumerator AttackRoutine()
     {
-        if (!selfTransform.gameObject.activeInHierarchy 
-            || this.attackTarget == target) return;
-        
-        if (shootingCoroutine != null) sightSystem.StopCoroutine(shootingCoroutine);
+        if (currentAmmo < 0)
+        {
+            yield return ReloadRoutine();
+        }
+        yield return base.AttackRoutine();
+    }
 
-        shootingCoroutine = sightSystem.StartCoroutine(ShootingRoutine(target));
+    private IEnumerator ReloadRoutine()
+    {
+        Debug.Log("Reload");
+        Status = AttackStatus.Reload;
+        yield return new WaitForSeconds(3f);
+        currentAmmo = Math.Min(fullAmmo, totalAmmo);
+        totalAmmo -= currentAmmo;
+        Debug.Log($"Reload Complete");
     }
 }

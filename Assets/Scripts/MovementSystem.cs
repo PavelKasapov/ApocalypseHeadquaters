@@ -16,12 +16,18 @@ public class MovementSystem : MonoBehaviour
 
     private Coroutine moveCoroutine;
     private Coroutine rotateCoroutine;
+    private Coroutine followCoroutine;
     private Vector3 pointToMove;
     private float moveAngle;
     private float speedAngleModifier;
     private Queue<Vector3> path = new Queue<Vector3>();
 
     private double distanceCheckValue = Vector3.one.sqrMagnitude * 0.01;
+
+    public MovementStatus Status => (
+        (moveCoroutine != null ? MovementStatus.Moving : MovementStatus.None) |
+        (rotateCoroutine != null ? MovementStatus.Rotating : MovementStatus.None)
+        );
 
     private void Awake()
     {
@@ -33,9 +39,32 @@ public class MovementSystem : MonoBehaviour
         combatSystem.OnTargetChange -= () => rotateCoroutine ??= StartCoroutine(RotateRoutine());
     }
 
+    public void Follow(Transform targetTransform)
+    {
+        if (followCoroutine != null) StopCoroutine(followCoroutine);
+
+        followCoroutine = StartCoroutine(FollowRoutine(targetTransform));
+        
+    }
+
+    public void MoveToPoint(Vector3 point)
+    {
+        if (followCoroutine != null) StopCoroutine(followCoroutine);
+
+        MoveCharacter(point);
+    }
+
+    IEnumerator FollowRoutine(Transform targetTransform)
+    {
+        while (true)
+        {
+            MoveCharacter(targetTransform.position);
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+
     public void MoveCharacter(Vector3 point)
     {
-        
         //Todo: Path Generation;
         path.Clear();
         path.Enqueue(point);

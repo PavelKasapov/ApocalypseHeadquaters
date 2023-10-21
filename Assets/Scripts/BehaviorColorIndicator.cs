@@ -15,6 +15,7 @@ public class BehaviorColorIndicator : MonoBehaviour
     {
         if (prevColor == color) return;
         prevColor = color;
+        Debug.Log(color);
 
         if (delayedSetColorCoroutine != null ) StopCoroutine( delayedSetColorCoroutine );
 
