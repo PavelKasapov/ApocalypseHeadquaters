@@ -1,21 +1,23 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using static UnityEngine.Rendering.DebugUI;
 
 public abstract class Attack
 {
     public abstract float MaxAttackRange { get; protected set; }
-    protected abstract WaitForSeconds delayBeforeAttack { get; set; }
-    protected abstract WaitForSeconds delayAfterAttack { get; set; }
+    
+    protected abstract float delayBeforeAttack { get; set; }
+    protected abstract float delayAfterAttack { get; set; }
+    private WaitForSeconds waitBeforeAttack;
+    private WaitForSeconds waitAfterAttack;
 
     protected readonly SightSystem sightSystem;
     protected readonly Transform selfTransform;
     protected Target attackTarget;
-    protected Coroutine attackCoroutine;
+    protected float CurrentStatusDuration;
     private Coroutine tryAttackCoroutine;
     private AttackStatus _status;
-    Action<AttackStatus> OnStatusChange = delegate { };
+    public Action<AttackStatus, float> OnStatusChange;
     public AttackStatus Status 
     {
         get => _status;
@@ -24,8 +26,7 @@ public abstract class Attack
             if (_status != value)
             {
                 _status = value;
-                Debug.Log($"CanAttack(attackTarget) {attackTarget.targetInfo.EntityType} {CanAttack(attackTarget)} {value} {tryAttackCoroutine != null} {attackCoroutine != null}");
-                //OnStatusChange(value);
+                OnStatusChange(value, CurrentStatusDuration);
             }
         }
     }
@@ -40,49 +41,65 @@ public abstract class Attack
 
     public virtual bool CanAttack(Target target)
     {
-        target.UpdateDistance();
-        return target.Distance < MaxAttackRange && sightSystem.VisibleTargets.ContainsKey(target.targetInfo);
+        return target != null 
+            && sightSystem.VisibleTargets.ContainsKey(target.targetInfo) 
+            && IsWithinDistance(target);
     }
+    public bool CanAttack() => CanAttack(attackTarget);
+
+    public bool IsWithinDistance(Target target)
+    {
+        if (target == null)
+        {
+            return false;
+        }
+        target.UpdateDistance();
+        return target.Distance < MaxAttackRange;
+    }
+    public bool IsWithinDistance() => IsWithinDistance(attackTarget);
 
     public virtual void ChangeTarget(Target target)
     {
         if (this.attackTarget == target 
             || !selfTransform.gameObject.activeInHierarchy) return;
 
-        Stop();
+        if (Status == AttackStatus.Aiming) Stop();
         Perform(target);
     }
 
     public void Stop()
     {
         if (tryAttackCoroutine != null) sightSystem.StopCoroutine(tryAttackCoroutine);
-        if (attackCoroutine != null) sightSystem.StopCoroutine(attackCoroutine);
+        tryAttackCoroutine = null;
     }
 
     public void Perform(Target target)
     {
-        if (target == null ) return;
+        if (target == null) return;
 
         attackTarget = target;
-        tryAttackCoroutine = sightSystem.StartCoroutine(TryAttackRoutine());
+
+        tryAttackCoroutine ??= sightSystem.StartCoroutine(TryAttackRoutine());
     }
 
     protected virtual IEnumerator AttackRoutine()
     {
-        var target = attackTarget;
-
-        while (target == attackTarget && attackTarget != null)
+        while (tryAttackCoroutine != null 
+            && attackTarget != null 
+            && CanAttack(attackTarget))
         {
+            CurrentStatusDuration = delayBeforeAttack;
             Status = AttackStatus.Aiming;
-            yield return delayBeforeAttack;
+            yield return waitBeforeAttack ??= new WaitForSeconds(delayBeforeAttack);
 
-            Status = AttackStatus.Attacking;
             yield return SingleAttackRoutine();
 
+            CurrentStatusDuration = delayAfterAttack;
             Status = AttackStatus.AttackCooldown;
-            yield return delayAfterAttack;
+            yield return waitAfterAttack ??= new WaitForSeconds(delayAfterAttack);   
         }
-        attackCoroutine = null;
+        CurrentStatusDuration = float.Epsilon;
+        Status = AttackStatus.NotPossible;
     }
 
     protected abstract IEnumerator SingleAttackRoutine();
@@ -91,24 +108,9 @@ public abstract class Attack
     {
         while (attackTarget != null)
         {
-            if (Status != AttackStatus.Attacking)
-            {
-                if (CanAttack(attackTarget))
-                {
-                    attackCoroutine ??= sightSystem.StartCoroutine(AttackRoutine());
-                }
-                else
-                {
-                    if (attackCoroutine != null)
-                    {
-                        sightSystem.StopCoroutine(attackCoroutine);
-                        attackCoroutine = null;
-                    }
-
-                    Status = AttackStatus.NotPossible;
-                }
-            }
+            yield return AttackRoutine();
             yield return new WaitForFixedUpdate();
         }
+        tryAttackCoroutine = null;
     }
 }

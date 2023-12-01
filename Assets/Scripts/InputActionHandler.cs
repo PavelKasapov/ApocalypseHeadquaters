@@ -5,7 +5,8 @@ using Zenject;
 public class InputActionHandler : MonoBehaviour
 {
     [SerializeField] private CameraController cameraController;
-    [Inject] private readonly ActiveSquadControl squadControl;
+    [Inject] private readonly ActiveSquadControl squadControl; 
+    [Inject] private readonly InfoPanel infoPanel;
 
     public void OnCameraInput(Vector2 direction)
     {
@@ -26,6 +27,7 @@ public class InputActionHandler : MonoBehaviour
 
         if (target == null)
         {
+            infoPanel.character?.SelectorHandler.MarkSelected(false);
             squadControl.SelectCharacter(null);
             return;
         }
@@ -33,13 +35,17 @@ public class InputActionHandler : MonoBehaviour
         switch (target.EntityType)
         {
             case EntityType.Enemy:
-                //Show UI Info
+                var character = target as Character;
+
+                squadControl.SelectCharacter(null);
+                infoPanel.SelectCharacter(character);
                 break;
 
             case EntityType.SquadMember:
-                var character = target as Character;
-                squadControl.SelectCharacter(character);
-                //Show UI Info
+                var squadMember = target as SquadMember;
+
+                squadControl.SelectCharacter(squadMember);
+                infoPanel.SelectCharacter(squadMember);
                 break;
         }
     }
@@ -60,7 +66,6 @@ public class InputActionHandler : MonoBehaviour
         switch (target.EntityType)
         {
             case EntityType.Enemy:
-                //Approach and attack
                 var character = target as Character;
                 squadControl.ChaseAndAttack(character);
                 break;

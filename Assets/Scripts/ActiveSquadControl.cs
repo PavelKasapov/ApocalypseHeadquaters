@@ -5,16 +5,15 @@ public class ActiveSquadControl : MonoBehaviour
     private Character selectedCharacter;
     private Squad selectedSquad;
 
-    public void SelectCharacter(Character clickedCharacter)
+    public void SelectCharacter(SquadMember clickedCharacter)
     {
-        selectedCharacter?.MarkSelected(false);
         selectedCharacter = clickedCharacter;
         
         if (selectedCharacter != null) 
         {
             selectedSquad = clickedCharacter.Squad;
-            selectedCharacter.MarkSelected(true);
         }
+        
     }
 
     public void MoveToPoint(Vector2 clickedPoint)
@@ -26,7 +25,7 @@ public class ActiveSquadControl : MonoBehaviour
         }   
         else if (selectedCharacter != null)
         {
-            selectedCharacter.CombatSystem.ChaseAndAttack(null);
+            selectedCharacter.CombatSystem.HardLockTarget(null);
             selectedCharacter.MovementSystem.MoveToPoint(clickedPoint);
         }
     }
@@ -40,7 +39,7 @@ public class ActiveSquadControl : MonoBehaviour
         }
         else if (selectedCharacter != null)
         {
-            selectedCharacter.CombatSystem.ChaseAndAttack(targetInfo);
+            selectedCharacter.CombatSystem.HardLockTarget(targetInfo);
             selectedCharacter.MovementSystem.MoveToPoint(targetInfo.Transform.position);
         }
     }

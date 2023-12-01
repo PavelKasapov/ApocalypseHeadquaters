@@ -1,14 +1,15 @@
 using System;
 using System.Collections;
-using TMPro;
 using UnityEngine;
 using Zenject;
 
 public class RangedAttack : Attack
 {
     private readonly BulletPool bulletPool;
-    protected override WaitForSeconds delayBeforeAttack { get; set; } = new(1f);
-    protected override WaitForSeconds delayAfterAttack { get; set; } = new(0.1f);
+    protected override float delayBeforeAttack { get; set; } = 1f;
+    protected override float delayAfterAttack { get; set; } = 0.1f;
+    private float delayBetweenShots = 0.1f;
+    private float reloadTime = 3f;
     public override float MaxAttackRange { get; protected set; } = 5f;
 
     public int fullAmmo = 9;
@@ -18,7 +19,7 @@ public class RangedAttack : Attack
     public RangedAttack(
         [Inject(Id = "ModelTransform")] Transform selfTransform,
         SightSystem sightSystem,
-        BulletPool bulletPool) : base(selfTransform,sightSystem) 
+        BulletPool bulletPool) : base(selfTransform, sightSystem) 
     {
         this.bulletPool = bulletPool;
     }
@@ -26,47 +27,57 @@ public class RangedAttack : Attack
     public override bool CanAttack(Target target)
     {
         return base.CanAttack(target)
-            && (currentAmmo > 0 || totalAmmo > 0);
-            /*&& Physics2D.CircleCast(selfTransform.position + selfTransform.up * 0.4f, 0.1f, attackTarget.targetInfo.Transform.position)*/;
+            && currentAmmo > 0;
     }
 
     protected override IEnumerator SingleAttackRoutine()
     {
         int burstCount = 3;
         var target = attackTarget;
+
+        CurrentStatusDuration = Math.Min(burstCount, currentAmmo) * delayBetweenShots;
+        Status = AttackStatus.Attacking;
+
         while (burstCount > 0 && currentAmmo > 0)
         {
             var selfPosition = selfTransform.position + selfTransform.up * 0.3f;
-            var targetPosition = target.targetInfo.Transform.position;
 
-            bulletPool.Pool.Get().Launch(selfPosition, (targetPosition - selfPosition).normalized);
+            bulletPool.Pool.Get().Launch(selfPosition, selfTransform.up);
 
             burstCount--;
             currentAmmo--;
-            yield return new WaitForSeconds(0.1f);
-        }
-        if (currentAmmo <= 0)
-        {
-            yield return ReloadRoutine();
+            yield return new WaitForSeconds(delayBetweenShots);
         }
     }
 
     protected override IEnumerator AttackRoutine()
     {
-        if (currentAmmo < 0)
+        while (totalAmmo > 0 || currentAmmo > 0)
         {
-            yield return ReloadRoutine();
+            if (currentAmmo <= 0)
+            {
+                yield return ReloadRoutine();
+            }
+
+            yield return base.AttackRoutine();
+
+            if (currentAmmo <= 0 && totalAmmo > 0)
+            {
+                yield return ReloadRoutine();
+            }
         }
-        yield return base.AttackRoutine();
+        CurrentStatusDuration = float.Epsilon;
+        Status = AttackStatus.NotPossible;
     }
 
     private IEnumerator ReloadRoutine()
     {
-        Debug.Log("Reload");
+        CurrentStatusDuration = reloadTime;
         Status = AttackStatus.Reload;
-        yield return new WaitForSeconds(3f);
+
+        yield return new WaitForSeconds(reloadTime);
+
         currentAmmo = Math.Min(fullAmmo, totalAmmo);
         totalAmmo -= currentAmmo;
-        Debug.Log($"Reload Complete");
     }
 }

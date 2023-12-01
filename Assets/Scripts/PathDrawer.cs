@@ -7,19 +7,29 @@ using Zenject;
 public class PathDrawer : MonoBehaviour
 {
     [SerializeField] private LineRenderer pathRenderer;
+
     [Inject(Id = "MainTransform")] private new readonly Transform transform;
+    [Inject] private readonly MovementSystem movementSystem;
+
     private Coroutine updatePathCoroutine;
+    private Queue<Vector3> path;
+
+    private void Awake()
+    {
+        movementSystem.OnPathGenerated += DrawPath;
+    }
 
     public void DrawPath(Queue<Vector3> path)
     {
+        this.path = path;
         pathRenderer.positionCount = path.Count + 1;
         pathRenderer.SetPositions(path.Reverse().ToArray());
         pathRenderer.SetPosition(path.Count, transform.position);
 
-        if (updatePathCoroutine == null) updatePathCoroutine = StartCoroutine(UpdatePathRoutine(path));
+        if (updatePathCoroutine == null) updatePathCoroutine = StartCoroutine(UpdatePathRoutine());
     }
 
-    IEnumerator UpdatePathRoutine(Queue<Vector3> path)
+    IEnumerator UpdatePathRoutine()
     {
         pathRenderer.enabled = true;
         while (path.Count > 0)
@@ -31,7 +41,6 @@ public class PathDrawer : MonoBehaviour
             pathRenderer.SetPosition(path.Count, transform.position);
             yield return null;
         }
-        pathRenderer.enabled = false;
         updatePathCoroutine = null;
     }
 }

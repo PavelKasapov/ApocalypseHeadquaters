@@ -1,9 +1,14 @@
-﻿public class MeleeHit : IDamageMaker
+﻿using UnityEngine;
+
+public class MeleeHit : IDamageMaker
 {
     private float damage;
     public float Damage => damage;
-    public MeleeHit(float damage = 1f)
+
+    public Vector3 Direction { get; private set; }
+    public MeleeHit(Vector3 direction, float damage = 1f)
     {
         this.damage = damage;
+        Direction = direction;
     }
 }

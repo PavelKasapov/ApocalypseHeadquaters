@@ -1,31 +1,24 @@
 using UnityEngine;
 using Zenject;
 
-public class Character : MonoBehaviour, IClickable, ITargetInfo
+public abstract class Character : MonoBehaviour, IClickable, ITargetInfo
 {
-    [SerializeField] private Squad squadUnit;
-    [SerializeField] private GameObject selectedCircle;
-    [SerializeField] private EntityType entityType;
-
     [Inject(Id = "MainTransform")] private Transform selfTransform;
     [Inject] private SightSystem sightSystem;
     [Inject] private MovementSystem movementSystem;
     [Inject] private CombatSystem combatSystem;
-    [Inject] private AI ai;
+    [Inject] private SelectorHandler selectorHandler;
 
     public MovementSystem MovementSystem => movementSystem;
-    public EntityType EntityType => entityType;
+    public abstract EntityType EntityType { get; }
     public Transform Transform => selfTransform;
-    public Squad Squad => squadUnit;
+
+
     public CombatSystem CombatSystem => combatSystem;
+    public SelectorHandler SelectorHandler => selectorHandler;
 
     private void Awake()
     {
         sightSystem.Initialize(90, 15, EntityType);
-    }
-
-    public void MarkSelected(bool isSelected)
-    {
-        selectedCircle.SetActive(isSelected);
     }
 }

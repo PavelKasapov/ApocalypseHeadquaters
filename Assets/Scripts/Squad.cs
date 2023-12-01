@@ -3,7 +3,6 @@ using UnityEngine;
 public class Squad : MonoBehaviour
 {
     [SerializeField] float squadWideness = 1f;
-
     [SerializeField] private Character[] characters;
 
     public void MoveSquad(Vector3 pointToMove)
@@ -26,7 +25,7 @@ public class Squad : MonoBehaviour
 
             if (!character.gameObject.activeSelf) continue;
 
-            character.CombatSystem.ChaseAndAttack(targetInfo);
+            character.CombatSystem.HardLockTarget(targetInfo);
         }
     }
 }

@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 public class BehaviorColorIndicator : MonoBehaviour
@@ -15,16 +14,6 @@ public class BehaviorColorIndicator : MonoBehaviour
     {
         if (prevColor == color) return;
         prevColor = color;
-        Debug.Log(color);
-
-        if (delayedSetColorCoroutine != null ) StopCoroutine( delayedSetColorCoroutine );
-
-        delayedSetColorCoroutine = StartCoroutine(DelayedSetColorRoutine(color));
-    }
-
-    IEnumerator DelayedSetColorRoutine(Color color)
-    {
-        yield return new WaitForSeconds(0.05f);
         spriteRenderer.color = color;
     }
 }

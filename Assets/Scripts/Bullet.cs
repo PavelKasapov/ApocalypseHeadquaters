@@ -13,7 +13,7 @@ public class Bullet : MonoBehaviour, IDamageMaker
     private static readonly TimeSpan threeSeconds = TimeSpan.FromSeconds(3);
 
     public float Damage => damage;
-
+    public Vector3 Direction => selfTransform.up;
     public void Launch(Vector3 position, Vector3 direction)
     {
         selfTransform.position = position;
@@ -38,9 +38,9 @@ public class Bullet : MonoBehaviour, IDamageMaker
         Release();
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.transform.TryGetComponent<IHittable>(out var hitTarget))
+        if (collision.transform.TryGetComponent<HitTaker>(out var hitTarget))
         {
             hitTarget.TakeDamage(this);
         }

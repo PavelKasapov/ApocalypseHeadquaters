@@ -24,12 +24,12 @@ public class HpBar : MonoBehaviour
     {
         _hpSlider.maxValue = hpSystem.Hp;
         SetValue(hpSystem.Hp);
-        hpSystem.onHpChanged += SetValue;
+        hpSystem.OnHpChanged += SetValue;
     }
 
     private void OnDestroy()
     {
-        hpSystem.onHpChanged -= SetValue;
+        hpSystem.OnHpChanged -= SetValue;
     }
 
     public void SetValue(float value) 

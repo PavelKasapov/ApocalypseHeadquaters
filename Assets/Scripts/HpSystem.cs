@@ -6,13 +6,13 @@ public class HpSystem
 {
     private float _hpValue = 30;
     private readonly GameObject characterGameObject;
-    public Action<float> onHpChanged = delegate { };
+    public Action<float> OnHpChanged = delegate { };
     public float Hp {
         get => _hpValue;
         private set 
         {
             _hpValue = value;
-            onHpChanged.Invoke(value);
+            OnHpChanged.Invoke(value);
 
             if (_hpValue <= 0)
             {

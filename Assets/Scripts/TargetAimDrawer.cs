@@ -16,6 +16,22 @@ public class TargetAimDrawer : MonoBehaviour
         this.lockTarget = lockTarget;
         targetAimLine.enabled = lockTarget != null;
 
+        if (isActiveAndEnabled) 
+            StartDrawing();
+    }
+    private void OnEnable()
+    {
+        StartDrawing();
+    }
+
+    private void OnDisable()
+    {
+        targetAimLine.enabled = false;
+        drawAimCoroutine = null;
+    }
+
+    private void StartDrawing()
+    {
         if (lockTarget != null && drawAimCoroutine == null)
         {
             drawAimCoroutine = StartCoroutine(DrawAimRoutine());
@@ -24,6 +40,7 @@ public class TargetAimDrawer : MonoBehaviour
 
     IEnumerator DrawAimRoutine()
     {
+        targetAimLine.enabled = true;
         while (lockTarget != null)
         {
             var selfPosition = transform.position;
@@ -34,6 +51,7 @@ public class TargetAimDrawer : MonoBehaviour
 
             yield return null;
         }
+        targetAimLine.enabled = false;
         drawAimCoroutine = null;
     }
 }

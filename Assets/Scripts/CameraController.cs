@@ -9,8 +9,8 @@ public class CameraController : MonoBehaviour
     [SerializeField] private LayerMask clickableLayerMask;
     [SerializeField] private float zoomSpeed = 7f;
 
-    private float targetZoom = 5f;
-    private float actualZoom = 5f;
+    private float targetZoom = 7f;
+    private float actualZoom = 7f;
     private Vector2 cameraMovementDirection;
 
     private Coroutine cameraMovementCoroutine;
